@@ -64,9 +64,12 @@ public class nanicomments {
             System.out.println("[" + (index + 1) + "/" + CHANNELS.size() + "] [" + (index * 100 / CHANNELS.size()) + "%] Récupération des commentaires de " + channelID);
             try(BufferedWriter writer = new BufferedWriter(new FileWriter(root + File.separator + "comments" + File.separator + channelID + ".json"))) {
                 writer.write("[\n");
+                String nextPageToken = null;
+                do {
+                    nextPageToken = getComments(channelID, nextPageToken, writer);
+                }while(nextPageToken != null);
                 getComments(channelID, null, writer);
                 writer.write("]\n");
-                writer.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -75,7 +78,7 @@ public class nanicomments {
         System.out.println("Terminé");
     }
 
-    private static void getComments(String channelID, String nextPageToken, BufferedWriter writer) {
+    private static String getComments(String channelID, String nextPageToken, BufferedWriter writer) {
         try {
             int currentKey = 0;
             URL url0 = new URL(
@@ -117,9 +120,11 @@ public class nanicomments {
                 Matcher m = p.matcher(data);
                 if(m.find()) {
                     writer.write(data.append(",").toString());
-                    getComments(channelID, m.group(), writer);
+                    writer.flush();
+                    return m.group();
                 }else {
                     writer.write(data.toString());
+                    writer.flush();
                 }
             }catch(IOException e) {
                 e.printStackTrace();
@@ -127,5 +132,6 @@ public class nanicomments {
         }catch(IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 }
